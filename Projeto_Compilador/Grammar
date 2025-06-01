@@ -1,0 +1,251 @@
+program : programHeading block DOT
+
+programHeading : PROGRAM identifier SEMI
+
+identifier : IDENT
+
+block : declarations compoundStatement
+
+declarations : declaration declarations
+             | empty
+
+declaration : constantDefinitionBlock
+            | typeDeclarationBlock
+            | variableDeclarationBlock
+            | procedureAndFunctionDeclarationBlock
+
+constantDefinitionBlock : CONST constantDefinitionList
+
+constantDefinitionList : constantDefinitionList constantDefinition SEMI
+                       | constantDefinition SEMI
+
+constantDefinition : identifier EQUAL constant
+
+constant : unsignedNumber
+        | sign unsignedNumber
+        | identifier
+        | sign identifier
+        | string
+        | constantChr
+
+unsignedNumber : unsignedInteger
+               | unsignedReal  
+
+unsignedInteger : NUM_INT
+
+unsignedReal : NUM_REAL
+
+sign : PLUS
+     | MINUS
+    
+string : STRING_LITERAL
+
+constantChr : CHR LPAREN unsignedInteger RPAREN
+
+typeDeclarationBlock : TYPE typeDefinitionList
+
+typeDefinitionList : typeDefinitionList typeDefinition SEMI
+                   | typeDefinition SEMI
+
+typeDefinition : identifier EQUAL type_
+
+type_ : scalarType
+      | subrangeType
+      | typeIdentifier
+      | stringType
+      | arrayType
+    
+scalarType : LPAREN identifierList RPAREN
+
+identifierList : identifierList COMMA identifier
+               | identifier
+
+subrangeType : unsignedInteger DOTDOT unsignedInteger
+
+identifierType : IDENT
+
+stringType : STRING LBRACK unsignedInteger RBRACK
+
+structuredType : arrayType
+                | recordType
+                | setType
+
+arrayType : ARRAY LBRACK subrangeType RBRACK OF typeIdentifier
+
+typeList : typeList COMMA indexType
+    | indexType
+
+indexType : simpleType
+
+simpleType : identifierType
+
+recordType : RECORD fieldList END
+
+fieldList : fixedPart
+    | fixedPart SEMI variantPart
+    | variantPart
+
+fixedPart : recordSectionList
+
+recordSectionList : recordSectionList SEMI recordSection
+    | recordSection
+
+recordSection : identifierList COLON type_
+
+variantPart : CASE tag OF variantList
+
+tag : identifier COLON typeIdentifier
+    | typeIdentifier
+
+typeIdentifier : identifier
+    | INTEGER
+    | REAL
+    | BOOLEAN
+    | CHAR
+    | STRING
+
+variantList : variantList SEMI variant
+    | variant
+
+variant : constList COLON LPAREN fieldList RPAREN
+
+constList : constList COMMA constant
+    | constant
+
+setType : SET OF baseType
+
+baseType : simpleType
+
+variableDeclarationBlock : VAR variableDeclarationList SEMI
+
+
+variableDeclarationList : variableDeclarationList SEMI variableDeclaration
+                        | variableDeclaration
+
+variableDeclaration : identifierList COLON type_
+
+
+procedureAndFunctionDeclarationBlock : procedureDeclaration SEMI
+                                     | functionDeclaration SEMI
+
+procedureDeclaration : PROCEDURE identifier SEMI block
+                     | PROCEDURE identifier formalParameterList_opt SEMI block
+
+formalParameterList_opt : formalParameterList
+                        | empty
+
+formalParameterList : LPAREN formalParameterSectionList RPAREN
+
+formalParameterSectionList : formalParameterSectionList SEMI formalParameterSection
+                           | formalParameterSection
+
+formalParameterSection : parameterGroup
+                        | VAR parameterGroup
+                        | FUNCTION parameterGroup
+                        | PROCEDURE parameterGroup
+
+parameterGroup : identifierList COLON typeIdentifier
+
+functionDeclaration : FUNCTION identifier formalParameterList_opt COLON resultType SEMI block
+                    | FUNCTION identifier SEMI block
+
+resultType : typeIdentifier
+
+compoundStatement : BEGIN statements END
+
+statements : statementList
+
+statementList : statementList SEMI statement
+              | statement
+
+statement : simpleStatement
+          | structuredStatement
+
+simpleStatement : callStatement 
+               | assignmentStatement
+               | emptyStatement_
+
+assignmentStatement : variable ASSIGN Init_Final
+
+variable : identifier
+         | indexedVariable
+
+indexedVariable : identifier LBRACK expression RBRACK
+
+expression : simpleExpression
+           | simpleExpression relationalOperator simpleExpression
+
+relationalOperator : EQUAL
+                   | NOT_EQUAL
+                   | LT
+                   | LE
+                   | GT
+                   | GE
+                   | IN
+
+simpleExpression : term
+                | sign term
+                | simpleExpression additiveOperator term~
+
+additiveOperator : PLUS
+                | MINUS
+                | OR
+
+term : factor
+    | term multiplicativeOperator factor
+
+multiplicativeOperator : STAR
+    | SLASH
+    | DIV
+    | MOD
+    | AND
+
+factor : variable
+        | unsignedConstant
+        | LPAREN expression RPAREN
+
+unsignedConstant : unsignedNumber
+    | string
+    | NIL
+    | TRUE
+    | FALSE
+
+
+callStatement : identifier 
+              | identifier LPAREN expressionList RPAREN
+
+expressionList : expressionList COMMA expression
+    | expressionList COMMA formattedExpression
+    | expression
+    | formattedExpression
+
+formattedExpression : variable COLON expression COLON expression
+    | variable COLON expression
+
+emptyStatement_ :
+
+
+structuredStatement : compoundStatement
+    | conditionalStatement
+    | loopStatement
+
+loopStatement : forStatement
+    | whileStatement
+    | repeatStatement
+
+forStatement : FOR identifier ASSIGN Init_Final TO Init_Final DO statement
+                    | FOR identifier ASSIGN Init_Final DOWNTO Init_Final DO statement
+
+Init_Final : callStatement
+           | expression
+
+whileStatement : WHILE expression DO statement
+
+repeatStatement : REPEAT statements UNTIL expression
+
+conditionalStatement : ifStatement
+
+ifStatement : IF expression THEN statement
+    | IF expression THEN statement ELSE statement
+
+empty :
